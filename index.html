@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Streaming PRO</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+}
+
+header {
+    background: #1e293b;
+    padding: 15px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.container {
+    padding: 15px;
+}
+
+/* DASHBOARD */
+.cards {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.card {
+    flex: 1;
+    min-width: 120px;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.activo-card { background: #16a34a; }
+.vencer-card { background: #f59e0b; }
+.vencido-card { background: #dc2626; }
+
+/* FORM */
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #1e293b;
+    color: white;
+}
+
+button {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+}
+
+/* BUSCADOR */
+.search {
+    margin-bottom: 10px;
+}
+
+.search input {
+    width: 100%;
+}
+
+/* TABLA */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #1e293b;
+}
+
+td, th {
+    padding: 10px;
+    text-align: center;
+}
+
+.activo { background: #14532d; }
+.porvencer { background: #78350f; }
+.vencido { background: #7f1d1d; }
+
+/* ALERTA */
+.alerta {
+    background: #dc2626;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📊 Panel Streaming PRO</header>
+
+<div class="container">
+
+<!-- ALERTAS -->
+{% if alertas %}
+<div class="alerta">
+<b>⚠️ Vencimientos:</b><br>
+{% for a in alertas %}
+{{a}}<br>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- DASHBOARD -->
+<div class="cards">
+    <div class="card activo-card">🟢 Activos: {{clientes|selectattr('estado','equalto','Activo')|list|length}}</div>
+    <div class="card vencer-card">🟡 Por vencer: {{clientes|selectattr('estado','equalto','Por vencer')|list|length}}</div>
+    <div class="card vencido-card">🔴 Vencidos: {{clientes|selectattr('estado','equalto','Vencido')|list|length}}</div>
+</div>
+
+<!-- FORM -->
+<form action="/add" method="POST">
+    <input name="nombre" placeholder="Nombre" required>
+    <input name="whatsapp" placeholder="WhatsApp">
+    <input name="servicio" placeholder="Servicio">
+    <input name="inicio" type="date">
+    <input name="vence" type="date" required>
+    <button type="submit">💾 Guardar</button>
+</form>
+
+<!-- BUSCADOR -->
+<div class="search">
+    <input type="text" id="buscar" placeholder="Buscar cliente..." onkeyup="filtrar()">
+</div>
+
+<!-- TABLA -->
+<table id="tabla">
+<tr>
+<th>Nombre</th>
+<th>WhatsApp</th>
+<th>Servicio</th>
+<th>Inicio</th>
+<th>Vence</th>
+<th>Estado</th>
+<th>❌</th>
+</tr>
+
+{% for c in clientes %}
+<tr class="{{ 'activo' if c.estado=='Activo' else 'porvencer' if c.estado=='Por vencer' else 'vencido' }}">
+<td>{{c.nombre}}</td>
+<td>{{c.whatsapp}}</td>
+<td>{{c.servicio}}</td>
+<td>{{c.inicio}}</td>
+<td>{{c.vence}}</td>
+<td>{{c.estado}}</td>
+<td><a href="/delete/{{c.id}}" style="color:white;">❌</a></td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<script>
+function filtrar() {
+    let input = document.getElementById("buscar").value.toLowerCase();
+    let rows = document.querySelectorAll("#tabla tr");
+
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+
+        let text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
+}
+</script>
+
+</body>
+</html>
