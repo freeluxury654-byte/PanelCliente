@@ -11,17 +11,15 @@ def get_db():
     return sqlite3.connect("clientes.db")
 
 # ======================
-# ESTADO + FORMATOS
+# ESTADO
 # ======================
-def parse_fecha(fecha):
-    try:
-        return datetime.strptime(fecha, "%Y-%m-%d").date()
-    except:
-        return datetime.strptime(fecha, "%Y/%m/%d").date()
-
 def calcular_estado(vence):
     hoy = datetime.now().date()
-    fecha_v = parse_fecha(vence)
+
+    try:
+        fecha_v = datetime.strptime(vence, "%Y-%m-%d").date()
+    except:
+        fecha_v = datetime.strptime(vence, "%Y/%m/%d").date()
 
     if fecha_v < hoy:
         return "Vencido"
@@ -31,7 +29,7 @@ def calcular_estado(vence):
         return "Activo"
 
 # ======================
-# ROUTES
+# HOME
 # ======================
 @app.route("/")
 def index():
@@ -42,14 +40,8 @@ def index():
     data = cursor.fetchall()
 
     clientes = []
-    alertas = []
 
     for c in data:
-        estado = calcular_estado(c[5])
-
-        if estado != "Activo":
-            alertas.append(f"{c[1]} → {estado}")
-
         clientes.append({
             "id": c[0],
             "nombre": c[1],
@@ -57,18 +49,21 @@ def index():
             "servicio": c[3],
             "inicio": c[4],
             "vence": c[5],
-            "estado": estado
+            "estado": calcular_estado(c[5])
         })
 
-    return render_template("index.html", clientes=clientes, alertas=alertas)
+    return render_template("index.html", clientes=clientes)
 
+# ======================
+# ADD
+# ======================
 @app.route("/add", methods=["POST"])
 def add():
-    nombre = request.form["nombre"]
-    whatsapp = request.form["whatsapp"]
-    servicio = request.form["servicio"]
-    inicio = request.form["inicio"]
-    vence = request.form["vence"]
+    nombre = request.form.get("nombre")
+    whatsapp = request.form.get("whatsapp")
+    servicio = request.form.get("servicio")
+    inicio = request.form.get("inicio")
+    vence = request.form.get("vence")
 
     db = get_db()
     cursor = db.cursor()
@@ -81,12 +76,17 @@ def add():
     db.commit()
     return redirect("/")
 
+# ======================
+# DELETE
+# ======================
 @app.route("/delete/<int:id>")
 def delete(id):
     db = get_db()
     cursor = db.cursor()
+
     cursor.execute("DELETE FROM clientes WHERE id=?", (id,))
     db.commit()
+
     return redirect("/")
 
 # ======================
